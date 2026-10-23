@@ -24,6 +24,5 @@ document-crud-service/
 │  ├─ conftest.py
 │  └─ test_document_crud.py
 ├─ Dockerfile
-├─ build.sh
 └─ pyproject.toml
 ```
