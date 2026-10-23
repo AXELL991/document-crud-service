@@ -1,16 +1,25 @@
-"""Core configuration for document‑crud‑service.
-All settings are read from environment variables (Twelve‑Factor).
-"""
-import os
+"""Configuración central del document-crud-service (pydantic-settings)."""
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Logging level (default INFO)
-LOGLEVEL = os.getenv("LOGLEVEL", "INFO")
 
-# Mongo connection settings
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:27017")
-MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "pdf_extractor_db")
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-# Docker resource limits (informative, not enforced here)
-CPU_LIMIT = os.getenv("CPU_LIMIT", "1")
-MEMORY_LIMIT = os.getenv("MEMORY_LIMIT", "512m")
+    # Logging
+    loglevel: str = "INFO"
 
+    # MongoDB - ÚNICA instancia, base de datos propia
+    mongo_uri: str = "mongodb://mongo:27017"
+    mongo_db_name: str = "document_crud_db"
+    mongo_timeout_ms: int = 5000
+
+    # Auth interna
+    internal_api_token: str = "change-me"
+
+    # Límites
+    max_text_bytes: int = 15 * 1024 * 1024  # 15 MB (debajo del límite BSON de 16 MB)
+    page_size_max: int = 100
+    page_size_default: int = 20
+
+
+settings = Settings()

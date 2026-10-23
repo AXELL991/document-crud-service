@@ -1,44 +1,71 @@
-"""Routes for document‑crud‑service.
-Provides placeholder CRUD endpoints for a generic Document model.
 """
+Rutas REST del document-crud-service.
 
-from fastapi import APIRouter, HTTPException
-from typing import List
+Prefijo: /v1
+"""
+from __future__ import annotations
 
-router = APIRouter(prefix="/documents", tags=["documents"])
+import logging
 
-# In‑memory placeholder storage
-_fake_db: List[dict] = []
+from fastapi import APIRouter, Header, HTTPException, Query, status
 
-@router.post("/", response_model=dict)
-async def create_document(doc: dict):
-    _fake_db.append(doc)
-    return doc
+from app import repository
+from app.dtos import DocumentCreate, DocumentPatch, DocumentResponse, PaginatedDocuments
+from app.exceptions import DocumentNotFoundError, IdempotencyConflictError, TextTooLargeError
 
-@router.get("/", response_model=List[dict])
-async def list_documents():
-    return _fake_db
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/v1", tags=["documentos"])
 
-@router.get("/{doc_id}", response_model=dict)
-async def get_document(doc_id: int):
+
+@router.post(
+    "/documents",
+    response_model=DocumentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_document(
+    payload: DocumentCreate,
+    idempotency_key: str = Header(..., alias="Idempotency-Key"),
+):
+    """Crea un documento. Implementa idempotencia mediante la cabecera Idempotency-Key."""
     try:
-        return _fake_db[doc_id]
-    except IndexError:
-        raise HTTPException(status_code=404, detail="Document not found")
+        return await repository.create_document(idempotency_key, payload)
+    except TextTooLargeError as exc:
+        raise HTTPException(status_code=413, detail=str(exc))
+    except IdempotencyConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
 
-@router.put("/{doc_id}", response_model=dict)
-async def update_document(doc_id: int, doc: dict):
+
+@router.get("/documents", response_model=PaginatedDocuments)
+async def list_documents(
+    page: int = Query(1, ge=1, description="Número de página (comienza en 1)"),
+    page_size: int = Query(20, ge=1, le=100, description="Documentos por página"),
+):
+    """Lista todos los documentos de forma paginada."""
+    return await repository.list_documents(page=page, page_size=page_size)
+
+
+@router.get("/documents/{doc_id}", response_model=DocumentResponse)
+async def get_document(doc_id: str):
+    """Obtiene un documento por su ID."""
     try:
-        _fake_db[doc_id] = doc
-        return doc
-    except IndexError:
-        raise HTTPException(status_code=404, detail="Document not found")
+        return await repository.get_document(doc_id)
+    except DocumentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
 
-@router.delete("/{doc_id}", response_model=dict)
-async def delete_document(doc_id: int):
+
+@router.patch("/documents/{doc_id}", response_model=DocumentResponse)
+async def patch_document(doc_id: str, patch: DocumentPatch):
+    """Actualiza parcialmente un documento."""
     try:
-        removed = _fake_db.pop(doc_id)
-        return removed
-    except IndexError:
-        raise HTTPException(status_code=404, detail="Document not found")
+        return await repository.patch_document(doc_id, patch)
+    except DocumentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
 
+
+@router.delete("/documents/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_document(doc_id: str):
+    """Elimina un documento."""
+    try:
+        await repository.delete_document(doc_id)
+    except DocumentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))

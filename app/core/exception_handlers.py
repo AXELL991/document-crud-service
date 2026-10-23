@@ -1,10 +1,15 @@
-"""Exception handlers for document‑crud‑service.
-Placeholder implementations – replace with real FastAPI exception handlers.
-"""
+"""Manejadores de excepciones HTTP para document-crud-service."""
+import logging
 
-from fastapi import Request, HTTPException
+from fastapi import Request
 from fastapi.responses import JSONResponse
 
-async def http_exception_handler(request: Request, exc: HTTPException):
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+logger = logging.getLogger(__name__)
 
+
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception("Error no manejado en %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Error interno del servidor"},
+    )

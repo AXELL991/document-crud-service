@@ -1,8 +1,13 @@
-"""Custom exception definitions for document‑crud‑service.
-Placeholder – extend as needed.
-"""
+"""Excepciones de dominio del document-crud-service."""
 
-class ServiceError(Exception):
-    """Base class for service‑level errors."""
-    pass
 
+class DocumentNotFoundError(Exception):
+    """El documento solicitado no existe."""
+
+
+class IdempotencyConflictError(Exception):
+    """Misma clave de idempotencia con payload distinto."""
+
+
+class TextTooLargeError(Exception):
+    """El texto supera el límite MAX_TEXT_BYTES."""

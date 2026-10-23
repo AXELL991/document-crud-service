@@ -1,8 +1,14 @@
-"""Metrics utilities for document‑crud‑service.
-Placeholder – replace with real Prometheus metrics.
-"""
+"""Métricas Prometheus para document-crud-service."""
+from prometheus_client import Counter, Histogram
 
-from prometheus_client import Counter
+crud_operations = Counter(
+    "document_crud_operations_total",
+    "Operaciones CRUD por tipo",
+    labelnames=["operation"],
+)
 
-requests_total = Counter('document_crud_requests_total', 'Total requests')
-
+crud_duration = Histogram(
+    "document_crud_duration_seconds",
+    "Duración de operaciones CRUD",
+    labelnames=["operation"],
+)
