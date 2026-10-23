@@ -1,0 +1,20 @@
+[tool.uv]
+
+[project]
+name = "document-crud-service"
+version = "0.1.0"
+description = "FastAPI service that owns MongoDB for PDF documents"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pymongo",
+    "python-dotenv",
+    "prometheus-client",
+    "python-json-logger",
+]
+
+[build-system]
+requires = ["uv"]
+build-backend = "uv.build"
+
