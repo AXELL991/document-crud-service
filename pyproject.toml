@@ -1,20 +1,35 @@
 [tool.uv]
+package = false
 
 [project]
 name = "document-crud-service"
 version = "0.1.0"
-description = "FastAPI service that owns MongoDB for PDF documents"
+description = "Servicio CRUD de documentos. Único dueño de MongoDB."
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi",
-    "uvicorn[standard]",
-    "pymongo",
-    "python-dotenv",
-    "prometheus-client",
-    "python-json-logger",
+    "fastapi>=0.115,<0.116",
+    "uvicorn[standard]>=0.32,<0.34",
+    "pymongo>=4.10,<5.0",
+    "pydantic>=2.10,<3.0",
+    "pydantic-settings>=2.6,<3.0",
+    "python-json-logger>=3.2,<4.0",
 ]
 
-[build-system]
-requires = ["uv"]
-build-backend = "uv.build"
+[dependency-groups]
+dev = [
+    "pytest>=8.3,<9.0",
+    "pytest-asyncio>=0.24,<0.25",
+    "httpx>=0.28,<0.29",
+    "ruff>=0.8,<0.9",
+]
 
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
