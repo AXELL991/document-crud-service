@@ -1,0 +1,55 @@
+# document-crud-service — docker-compose individual (desarrollo standalone)
+# Ejecutar desde este directorio:  docker compose up --build -d
+# Requiere: mongodb (se levanta junto)
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: pdf_extractor_db
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - crud-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  document-crud-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: document-crud-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      LOGLEVEL: info
+      MONGO_URI: mongodb://mongo:27017/pdf_extractor_db
+      MONGO_DB_NAME: pdf_extractor_db
+      INTERNAL_API_TOKEN: "change-me-in-production"
+      MAX_TEXT_BYTES: 15728640
+      PAGE_SIZE_MAX: 100
+    networks:
+      - crud-net
+    depends_on:
+      mongodb:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  crud-net:
+    driver: bridge
+
+volumes:
+  mongo-data:
