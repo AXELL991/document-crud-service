@@ -6,11 +6,11 @@ Servicio CRUD de documentos PDF extraídos. Es el **único dueño de MongoDB**. 
 
 | Método | Ruta | Descripción | Auth |
 |--------|------|-------------|------|
-| POST | `/v1/documents` | Crear documento (idempotente vía `Idempotency-Key`) | `X-Internal-Token` |
+| POST | `/v1/documents` | Crear documento (idempotente vía `Idempotency-Key`) | `X-Internal-Token`, `X-Owner-Id` |
 | GET | `/v1/documents` | Listar documentos (paginado) | `X-Internal-Token` |
-| GET | `/v1/documents/{id}` | Obtener documento por ID | `X-Internal-Token` |
-| PATCH | `/v1/documents/{id}` | Actualizar parcialmente | `X-Internal-Token` |
-| DELETE | `/v1/documents/{id}` | Eliminar documento | `X-Internal-Token` |
+| GET | `/v1/documents/{id}` | Obtener documento por ID | `X-Internal-Token`, `X-Owner-Id` |
+| PATCH | `/v1/documents/{id}` | Actualizar parcialmente | `X-Internal-Token`, `X-Owner-Id` |
+| DELETE | `/v1/documents/{id}` | Eliminar documento | `X-Internal-Token`, `X-Owner-Id` |
 | GET | `/health/live` | Liveness probe | — |
 | GET | `/health/ready` | Readiness (ping a MongoDB) | — |
 
@@ -26,7 +26,7 @@ Servicio CRUD de documentos PDF extraídos. Es el **único dueño de MongoDB**. 
 |----------|-------------|-------------|
 | `MONGO_URI` | `mongodb://mongo:27017/pdf_extractor_db` | URI de MongoDB |
 | `MONGO_DB_NAME` | `pdf_extractor_db` | Nombre de la base de datos |
-| `INTERNAL_API_TOKEN` | `change-me-in-production` | Token interno |
+| `INTERNAL_API_TOKEN` | — | Token interno (requerido, sin default inseguro) |
 | `MAX_TEXT_BYTES` | `15728640` | Límite de texto (15 MB) |
 | `PAGE_SIZE_MAX` | `100` | Páginas máximas por listado |
 | `LOGLEVEL` | `info` | Nivel de logging |

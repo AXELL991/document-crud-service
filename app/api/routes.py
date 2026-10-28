@@ -25,10 +25,11 @@ router = APIRouter(prefix="/v1", tags=["documentos"])
 async def create_document(
     payload: DocumentCreate,
     idempotency_key: str = Header(..., alias="Idempotency-Key"),
+    owner_id: str = Header(..., alias="X-Owner-Id"),
 ):
     """Crea un documento. Implementa idempotencia mediante la cabecera Idempotency-Key."""
     try:
-        return await repository.create_document(idempotency_key, payload)
+        return await repository.create_document(idempotency_key, owner_id, payload)
     except TextTooLargeError as exc:
         raise HTTPException(status_code=413, detail=str(exc))
     except IdempotencyConflictError as exc:
@@ -45,27 +46,37 @@ async def list_documents(
 
 
 @router.get("/documents/{doc_id}", response_model=DocumentResponse)
-async def get_document(doc_id: str):
-    """Obtiene un documento por su ID."""
+async def get_document(
+    doc_id: str,
+    owner_id: str = Header(..., alias="X-Owner-Id"),
+):
+    """Obtiene un documento por su ID. Solo el propietario puede acceder."""
     try:
-        return await repository.get_document(doc_id)
+        return await repository.get_document(doc_id, owner_id)
     except DocumentNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 
 
 @router.patch("/documents/{doc_id}", response_model=DocumentResponse)
-async def patch_document(doc_id: str, patch: DocumentPatch):
-    """Actualiza parcialmente un documento."""
+async def patch_document(
+    doc_id: str,
+    patch: DocumentPatch,
+    owner_id: str = Header(..., alias="X-Owner-Id"),
+):
+    """Actualiza parcialmente un documento. Solo el propietario puede modificar."""
     try:
-        return await repository.patch_document(doc_id, patch)
+        return await repository.patch_document(doc_id, owner_id, patch)
     except DocumentNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 
 
 @router.delete("/documents/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_document(doc_id: str):
-    """Elimina un documento."""
+async def delete_document(
+    doc_id: str,
+    owner_id: str = Header(..., alias="X-Owner-Id"),
+):
+    """Elimina un documento. Solo el propietario puede eliminar."""
     try:
-        await repository.delete_document(doc_id)
+        await repository.delete_document(doc_id, owner_id)
     except DocumentNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc))

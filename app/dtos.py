@@ -14,6 +14,7 @@ class DocumentCreate(BaseModel):
     text: str = Field(..., description="Texto extraído del PDF")
     pages: int = Field(..., ge=1, description="Número de páginas del PDF")
     pdf_hash: str = Field(..., description="SHA-256 del PDF original")
+    owner_id: str = Field(..., description="Identificador del propietario del documento")
 
 
 class DocumentPatch(BaseModel):
@@ -32,6 +33,7 @@ class DocumentResponse(BaseModel):
     pages: int
     pdf_hash: str
     idempotency_key: str
+    owner_id: str
     created_at: datetime
     updated_at: Optional[datetime] = None
 

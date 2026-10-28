@@ -12,7 +12,7 @@ def test_no_token_returns_401(client: TestClient, sample_payload: dict):
     r = client.post(
         "/v1/documents",
         json=sample_payload,
-        headers={"Idempotency-Key": "key-001"},
+        headers={"Idempotency-Key": "key-001", "X-Owner-Id": "test-owner-001"},
     )
     assert r.status_code == 401
 
@@ -28,7 +28,10 @@ def test_create_and_get_document(client: TestClient, auth_headers: dict, sample_
 
     r = client.get(
         f"/v1/documents/{doc_id}",
-        headers={"X-Internal-Token": auth_headers["X-Internal-Token"]},
+        headers={
+            "X-Internal-Token": auth_headers["X-Internal-Token"],
+            "X-Owner-Id": auth_headers["X-Owner-Id"],
+        },
     )
     assert r.status_code == 200
     assert r.json()["id"] == doc_id
@@ -40,6 +43,7 @@ def test_idempotency_same_payload_returns_existing(
     headers = {
         "X-Internal-Token": "change-me",
         "Idempotency-Key": "idem-same-001",
+        "X-Owner-Id": "test-owner-001",
     }
     r1 = client.post("/v1/documents", json=sample_payload, headers=headers)
     assert r1.status_code == 201, r1.text
@@ -58,6 +62,7 @@ def test_idempotency_same_key_diff_payload_returns_409(
     headers = {
         "X-Internal-Token": "change-me",
         "Idempotency-Key": "idem-diff-001",
+        "X-Owner-Id": "test-owner-001",
     }
     client.post("/v1/documents", json=sample_payload, headers=headers)
 
@@ -70,7 +75,9 @@ def test_list_documents(client: TestClient, auth_headers: dict, sample_payload: 
     client.post("/v1/documents", json=sample_payload, headers=auth_headers)
     r = client.get(
         "/v1/documents",
-        headers={"X-Internal-Token": auth_headers["X-Internal-Token"]},
+        headers={
+            "X-Internal-Token": auth_headers["X-Internal-Token"],
+        },
     )
     assert r.status_code == 200
     body = r.json()
@@ -81,7 +88,10 @@ def test_list_documents(client: TestClient, auth_headers: dict, sample_payload: 
 def test_get_nonexistent_document(client: TestClient, auth_headers: dict):
     r = client.get(
         "/v1/documents/000000000000000000000000",
-        headers={"X-Internal-Token": auth_headers["X-Internal-Token"]},
+        headers={
+            "X-Internal-Token": auth_headers["X-Internal-Token"],
+            "X-Owner-Id": auth_headers["X-Owner-Id"],
+        },
     )
     assert r.status_code == 404
 
@@ -97,6 +107,7 @@ def test_patch_document(client: TestClient, auth_headers: dict, sample_payload: 
         headers={
             "X-Internal-Token": auth_headers["X-Internal-Token"],
             "Idempotency-Key": "patch-key-001",
+            "X-Owner-Id": auth_headers["X-Owner-Id"],
         },
     )
     assert r.status_code == 200
@@ -110,12 +121,18 @@ def test_delete_document(client: TestClient, auth_headers: dict, sample_payload:
 
     r = client.delete(
         f"/v1/documents/{doc_id}",
-        headers={"X-Internal-Token": auth_headers["X-Internal-Token"]},
+        headers={
+            "X-Internal-Token": auth_headers["X-Internal-Token"],
+            "X-Owner-Id": auth_headers["X-Owner-Id"],
+        },
     )
     assert r.status_code == 204, r.text
 
     r = client.get(
         f"/v1/documents/{doc_id}",
-        headers={"X-Internal-Token": auth_headers["X-Internal-Token"]},
+        headers={
+            "X-Internal-Token": auth_headers["X-Internal-Token"],
+            "X-Owner-Id": auth_headers["X-Owner-Id"],
+        },
     )
     assert r.status_code == 404

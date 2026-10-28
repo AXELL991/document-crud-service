@@ -100,6 +100,7 @@ def _to_response(doc: dict) -> DocumentResponse:
         pages=doc["pages"],
         pdf_hash=doc["pdf_hash"],
         idempotency_key=doc["idempotency_key"],
+        owner_id=doc["owner_id"],
         created_at=doc["created_at"],
         updated_at=doc.get("updated_at"),
     )
@@ -107,6 +108,7 @@ def _to_response(doc: dict) -> DocumentResponse:
 
 async def create_document(
     idempotency_key: str,
+    owner_id: str,
     payload: DocumentCreate,
 ) -> DocumentResponse:
     """
@@ -125,6 +127,7 @@ async def create_document(
         "pages": payload.pages,
         "pdf_hash": payload.pdf_hash,
         "idempotency_key": idempotency_key,
+        "owner_id": owner_id,
         "created_at": now,
     }
 
@@ -142,13 +145,13 @@ async def create_document(
         )
 
 
-async def get_document(doc_id: str) -> DocumentResponse:
+async def get_document(doc_id: str, owner_id: str) -> DocumentResponse:
     db = get_db()
     try:
         oid = ObjectId(doc_id)
     except Exception:
         raise DocumentNotFoundError(f"ID inválido: {doc_id}")
-    doc = await db.documents.find_one({"_id": oid})
+    doc = await db.documents.find_one({"_id": oid, "owner_id": owner_id})
     if not doc:
         raise DocumentNotFoundError(f"Documento {doc_id} no encontrado")
     return _to_response(doc)
@@ -164,7 +167,7 @@ async def list_documents(page: int, page_size: int) -> PaginatedDocuments:
     return PaginatedDocuments(items=items, total=total, page=page, page_size=page_size)
 
 
-async def patch_document(doc_id: str, patch: DocumentPatch) -> DocumentResponse:
+async def patch_document(doc_id: str, owner_id: str, patch: DocumentPatch) -> DocumentResponse:
     db = get_db()
     try:
         oid = ObjectId(doc_id)
@@ -172,10 +175,10 @@ async def patch_document(doc_id: str, patch: DocumentPatch) -> DocumentResponse:
         raise DocumentNotFoundError(f"ID inválido: {doc_id}")
     update = {k: v for k, v in patch.model_dump().items() if v is not None}
     if not update:
-        return await get_document(doc_id)
+        return await get_document(doc_id, owner_id)
     update["updated_at"] = datetime.now(timezone.utc)
     result = await db.documents.find_one_and_update(
-        {"_id": oid},
+        {"_id": oid, "owner_id": owner_id},
         {"$set": update},
         return_document=True,
     )
@@ -184,12 +187,12 @@ async def patch_document(doc_id: str, patch: DocumentPatch) -> DocumentResponse:
     return _to_response(result)
 
 
-async def delete_document(doc_id: str) -> None:
+async def delete_document(doc_id: str, owner_id: str) -> None:
     db = get_db()
     try:
         oid = ObjectId(doc_id)
     except Exception:
         raise DocumentNotFoundError(f"ID inválido: {doc_id}")
-    result = await db.documents.delete_one({"_id": oid})
+    result = await db.documents.delete_one({"_id": oid, "owner_id": owner_id})
     if result.deleted_count == 0:
         raise DocumentNotFoundError(f"Documento {doc_id} no encontrado")
