@@ -1,14 +1,9 @@
 """
 Punto de entrada del document-crud-service.
 
-Rutas:
-  POST   /v1/documents              - Crear documento (con Idempotency-Key)
-  GET    /v1/documents              - Listar documentos (paginado)
-  GET    /v1/documents/{id}         - Obtener documento
-  PATCH  /v1/documents/{id}         - Actualizar parcialmente
-  DELETE /v1/documents/{id}         - Eliminar
-  GET    /health/live               - Liveness probe
-  GET    /health/ready              - Readiness probe (hace ping a Mongo)
+Composition root: instancia FastAPI, conecta el repositorio de MongoDB,
+construye el servicio de negocio y expone los rutas definidas en
+``app.api.routes``.
 """
 from __future__ import annotations
 
@@ -19,14 +14,18 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 
-from app import repository
 from app.api import routes
 from app.core.config import settings
 from app.core.exception_handlers import unhandled_exception_handler
 from app.core.logging_config import configure_logging
+from app.repository import DocumentRepository
+from app.services.document_service import DocumentService
 
 configure_logging(settings.loglevel.upper())
 logger = logging.getLogger(__name__)
+
+repository = DocumentRepository()
+document_service = DocumentService(repository=repository)
 
 
 @asynccontextmanager
