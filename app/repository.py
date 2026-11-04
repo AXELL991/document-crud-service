@@ -147,14 +147,14 @@ class DocumentRepository:
             )
         return self._to_domain(doc)
 
-    async def list(self, page: int, page_size: int) -> PaginatedDocuments:
-        """Lista documentos de forma paginada."""
+    async def list(self, page: int, page_size: int, owner_id: str) -> PaginatedDocuments:
+        """Lista documentos de forma paginada filtrados por propietario."""
         db = self._db
         page_size = min(page_size, settings.page_size_max)
         skip = (page - 1) * page_size
-        total = await db.documents.count_documents({})
+        total = await db.documents.count_documents({"owner_id": owner_id})
         cursor = (
-            db.documents.find({})
+            db.documents.find({"owner_id": owner_id})
             .sort("created_at", ASCENDING)
             .skip(skip)
             .limit(page_size)

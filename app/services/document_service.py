@@ -59,9 +59,9 @@ class DocumentService:
         """Obtiene un documento por su hash SHA-256 (checksum)."""
         return await self._repository.get_by_checksum(checksum, owner_id)
 
-    async def list_documents(self, page: int, page_size: int) -> PaginatedDocuments:
-        """Lista documentos de forma paginada."""
-        return await self._repository.list(page, page_size)
+    async def list_documents(self, page: int, page_size: int, owner_id: str) -> PaginatedDocuments:
+        """Lista documentos de forma paginada filtrados por propietario."""
+        return await self._repository.list(page, page_size, owner_id=owner_id)
 
     async def patch_document(
         self, doc_id: str, owner_id: str, patch: DocumentPatch

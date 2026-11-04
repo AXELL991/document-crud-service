@@ -65,9 +65,10 @@ async def create_document(
 async def list_documents(
     page: int = Query(1, ge=1, description="Número de página (comienza en 1)"),
     page_size: int = Query(20, ge=1, le=100, description="Documentos por página"),
+    owner_id: str = Header(..., alias="X-Owner-Id"),
 ):
-    """Lista todos los documentos de forma paginada."""
-    result = await _get_document_service().list_documents(page=page, page_size=page_size)
+    """Lista documentos de forma paginada filtrados por propietario."""
+    result = await _get_document_service().list_documents(page=page, page_size=page_size, owner_id=owner_id)
     return JSONResponse(
         content={
             "items": [_doc_to_json(d) for d in result.items],
